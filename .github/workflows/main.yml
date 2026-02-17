@@ -1,0 +1,42 @@
+name: Auto-Build EXE to Repo
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        pip install pyinstaller pyautogui pynput Pillow
+
+    - name: Build EXE
+      run: |
+        pyinstaller --onefile --noconsole `
+        --hidden-import=pyautogui --hidden-import=pynput `
+        --hidden-import=PIL --hidden-import=PIL.Image --hidden-import=PIL.ImageGrab `
+        --collect-all pyautogui --collect-all pynput `
+        color_clicker_top.py
+
+    - name: Commit EXE to Repo
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        # Move the exe from the dist folder to the main folder
+        copy dist/color_clicker_top.exe color_clicker_top.exe
+        git add color_clicker_top.exe
+        git commit -m "Automated EXE build"
+        git push
